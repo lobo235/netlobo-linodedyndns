@@ -1,0 +1,1 @@
+*/30 * * * * /updaterScript.sh >> /var/log/updaterScript.log
