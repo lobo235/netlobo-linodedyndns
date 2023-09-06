@@ -1,5 +1,5 @@
 # netlobo-linodedyndns
-Linode Dynamic DNS Updater
+Linode Dynamic DNS Updater docker container
 
 ## Required Environment Variables:
 * LINODE_API_KEY (Generate this in your Linode account)
