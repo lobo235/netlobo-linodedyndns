@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Modified by Justin Barlow (https://github.com/lobo235) on 09/06/2023
 # Goal is to host this in a docker container with built-in cron to run in my home lab Nomad cluster
 
