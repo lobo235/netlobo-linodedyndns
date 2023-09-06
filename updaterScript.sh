@@ -21,7 +21,7 @@
 # NAME=
 
 function resource_update {
-curl -H "Content-Type: application/json" \
+curl -s -H "Content-Type: application/json" \
 	-H "Authorization: Bearer $LINODE_API_KEY" \
 	-X PUT -d '{
 		"type": "A",
@@ -51,5 +51,6 @@ if [ "$WAN_IP" = "$OLD_WAN_IP" ]; then
 else
 	echo $WAN_IP > $HOME/.wan_ip.txt
 	echo "Updating DNS to $WAN_IP. Results from Linode are displayed below."
-	resource_update
+	resource_update | jq -M
+	echo
 fi

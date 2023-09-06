@@ -1,6 +1,6 @@
 FROM alpine:3.18
 
-RUN apk add --update apk-cron && rm -rf /var/cache/apk/*
+RUN apk --no-cache add --update apk-cron curl jq && rm -rf /var/cache/apk/*
 
 ADD crontab.txt /crontab.txt
 ADD updaterScript.sh /updaterScript.sh
