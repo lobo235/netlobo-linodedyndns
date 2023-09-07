@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# run command once at startup
-echo "Container Started... running DNS check/update"
-/bin/sh /updaterScript.sh
+function log {
+	echo "[$(date "+%Y-%m-%d %H:%M:%S")] $1"
+}
 
-# start cron
-echo "Starting Cron..."
-/usr/sbin/crond -f -l 8
+# run command once at startup
+log "Container Started... running DNS check/update loop"
+/bin/sh /updaterScript.sh
