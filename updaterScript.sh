@@ -1,6 +1,6 @@
 #!/bin/sh
 # Modified by Justin Barlow (https://github.com/lobo235) on 09/06/2023
-# Goal is to host this in a docker container with built-in 5-minute check loop to run in my home lab Nomad cluster
+# Goal is to host this in a docker container with built-in 10-minute check loop to run in my home lab Nomad cluster
 
 # This script update is based on information found here: https://www.linode.com/docs/api/domains/#domain-record-update
 
@@ -66,7 +66,7 @@ LINODE_IP=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.lin
 echo $WAN_IP > ${HOME}/wan_ip.txt
 
 if [ "${WAN_IP}" = "${LINODE_IP}" ]; then
-	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${NAME}. Will check again in 5 minutes..."
+	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${NAME}. Will check again every 10 minutes..."
 else
 	log "Current WAN IP (${WAN_IP}) differs from the Linode DNS record (${LINODE_IP}) for ${NAME}. Results from Linode are displayed below:" 
 	resource_update | jq -M
