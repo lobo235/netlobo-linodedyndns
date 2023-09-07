@@ -75,6 +75,6 @@ fi
 
 while true
 do
-	check_wan
 	sleep 600
+	check_wan
 done
