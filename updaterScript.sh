@@ -16,16 +16,18 @@
 
 # Environment variables needed by the container
 # LINODE_API_KEY=
-# DOMAIN_ID=
-# RESOURCE_ID=
-# NAME=
+# DOMAIN_NAME=
+# A_RECORD=
+
+# Optional Environment variables
+CHECK_FREQUENCY_SECS=600 # (defaults to 10 minutes)
 
 function resource_update {
 curl -s -H "Content-Type: application/json" \
 	-H "Authorization: Bearer ${LINODE_API_KEY}" \
 	-X PUT -d '{
 		"type": "A",
-		"name": "'${NAME}'",
+		"name": "'${A_RECORD}'",
 		"target": "'${WAN_IP}'",
 		"priority": 0,
 		"weight": 0,
@@ -61,20 +63,38 @@ else
 fi
 }
 
+function match_linode_records {
+	DOMAIN_ID=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.linode.com/v4/domains/ | jq -r ".data[] | select(.domain==\"${DOMAIN_NAME}\") | .id")
+	if [ ${DOMAIN_ID} -gt 0 ]; then
+		log "Domain name ${DOMAIN_NAME} was found with ID ${DOMAIN_ID}"
+	else
+		log "Domain name ${DOMAIN_NAME} was not found in the Linode account. Check the spelling or make sure the LINODE_API_KEY is correct"
+		exit 1
+	fi
+	RESOURCE_ID=$(curl -s -H "Authorization: Bearer $LINODE_API_KEY" https://api.linode.com/v4/domains/$DOMAIN_ID/records/ | jq ".data[] | select(.type==\"A\" and .name==\"${A_RECORD}\") | .id")
+	if [ ${RESOURCE_ID} -gt 0 ]; then
+		log "DNS A record with name ${A_RECORD} was found with ID ${RESOURCE_ID}"
+	else
+		log "DNS A record with name ${A_RECORD} was not found in the ${DOMAIN_NAME} domain. Check the spelling or make sure the A record actually exists"
+		exit 1
+	fi
+}
+
+match_linode_records
 WAN_IP=$(curl -s icanhazip.com)
 LINODE_IP=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID} | jq -r ".target")
 echo $WAN_IP > ${HOME}/wan_ip.txt
 
 if [ "${WAN_IP}" = "${LINODE_IP}" ]; then
-	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${NAME}. Will check again every 10 minutes..."
+	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${A_RECORD}. Will check again every 10 minutes..."
 else
-	log "Current WAN IP (${WAN_IP}) differs from the Linode DNS record (${LINODE_IP}) for ${NAME}. Results from Linode are displayed below:" 
+	log "Current WAN IP (${WAN_IP}) differs from the Linode DNS record (${LINODE_IP}) for ${A_RECORD}. Results from Linode are displayed below:" 
 	resource_update | jq -M
 	echo
 fi
 
 while true
 do
-	sleep 600
+	sleep ${CHECK_FREQUENCY_SECS}
 	check_wan
 done
