@@ -85,7 +85,7 @@ function match_linode_records {
 }
 
 match_linode_records
-WAN_IP=$(curl -s icanhazip.com)
+WAN_IP=$(curl -s ${WAN_IP_PROVIDER})
 LINODE_IP=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID} | jq -r ".target")
 echo $WAN_IP > ${HOME}/wan_ip.txt
 
