@@ -13,9 +13,15 @@
 # DOMAIN_NAME=
 # A_RECORD=
 
+[ -z "${LINODE_API_KEY}" ] && echo "No LINODE_API_KEY was provided, exiting!" && exit 1 || echo "LINODE_API_KEY was provided"
+echo "Configured DOMAIN_NAME is ${DOMAIN_NAME}"
+echo "Configured A_RECORD is ${A_RECORD}"
+
 # Optional Environment variables
 [ -z "${WAN_IP_PROVIDER}" ] && WAN_IP_PROVIDER="ipv4.icanhazip.com" || WAN_IP_PROVIDER=${WAN_IP_PROVIDER}
+echo "Configured WAN_IP_PROVIDER is ${WAN_IP_PROVIDER}"
 [ -z "${CHECK_FREQUENCY_SECS}" ] && CHECK_FREQUENCY_SECS="600" || CHECK_FREQUENCY_SECS=${CHECK_FREQUENCY_SECS}
+echo "Configured CHECK_FREQUENCY_SECS is ${CHECK_FREQUENCY_SECS}"
 
 function resource_update {
 	curl -s -H "Content-Type: application/json" \
