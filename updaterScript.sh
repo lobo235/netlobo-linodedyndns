@@ -1,18 +1,12 @@
 #!/bin/sh
 # Modified by Justin Barlow (https://github.com/lobo235) on 09/06/2023
-# Goal is to host this in a docker container with built-in 10-minute check loop to run in my home lab Nomad cluster
+# Goal is to host this in a docker container with built-in check loop to run in my home lab Nomad cluster
 
-# This script update is based on information found here: https://www.linode.com/docs/api/domains/#domain-record-update
+# This script is based on information found here: https://www.linode.com/docs/api/domains/#domain-record-update
 
-# You first must find out the domain ID and resource ID numbers. In order to do this follow the steps below.
-# 1. Create a Linode API Key through your account profile at https://cloud.linode.com/profile/tokens. Give it rights to read/write to domains only.
-# 2. From a shell run the following command: LINODE_API_KEY=[insert API key from step 1 here]
-# 3. Run the following command to get the domain ID number for the domain you want to manage: curl -H "Authorization: Bearer $LINODE_API_KEY" https://api.linode.com/v4/domains/
-# 4. From a shell run the following command: DOMAIN_ID=[insert domain ID number from step 3 here]
-# 5. Run the following command to get the resource ID number for the subdomain you want to manage: curl -H "Authorization: Bearer $LINODE_API_KEY" https://api.linode.com/v4/domains/$DOMAIN_ID/records/
-# 6. From a shell run the following command: RESOURCE_ID=[insert resource ID number from step 5 here]
-# 7. Run the following command to verify the current settings for this resource: curl -H "Authorization: Bearer $LINODE_API_KEY" https://api.linode.com/v4/domains/$DOMAIN_ID/records/$RESOURCE_ID
-# 8. Use the information collected from these commands to complete the variables below in this script.
+# Prerequisites
+# A Linode Account with a Domain name hosted in that account
+# Create an existing 'A Record' entry for the Domain
 
 # Environment variables needed by the container
 # LINODE_API_KEY=
@@ -20,24 +14,25 @@
 # A_RECORD=
 
 # Optional Environment variables
-CHECK_FREQUENCY_SECS=600 # (defaults to 10 minutes)
+WAN_IP_PROVIDER="ipv4.icanhazip.com" # (Must only return the IP address, no html or extra stuff!)
+CHECK_FREQUENCY_SECS=600 # (Defaults to 10 minutes)
 
 function resource_update {
-curl -s -H "Content-Type: application/json" \
-	-H "Authorization: Bearer ${LINODE_API_KEY}" \
-	-X PUT -d '{
-		"type": "A",
-		"name": "'${A_RECORD}'",
-		"target": "'${WAN_IP}'",
-		"priority": 0,
-		"weight": 0,
-		"port": 0,
-		"service": null,
-		"protocol": null,
-		"ttl_sec": 120,
-		"tag": null
-	}' \
-	https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID}
+	curl -s -H "Content-Type: application/json" \
+		-H "Authorization: Bearer ${LINODE_API_KEY}" \
+		-X PUT -d '{
+			"type": "A",
+			"name": "'${A_RECORD}'",
+			"target": "'${WAN_IP}'",
+			"priority": 0,
+			"weight": 0,
+			"port": 0,
+			"service": null,
+			"protocol": null,
+			"ttl_sec": 120,
+			"tag": null
+		}' \
+		https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID}
 }
 
 function log {
@@ -45,22 +40,25 @@ function log {
 }
 
 function check_wan {
-WAN_IP=$(curl -s icanhazip.com)
-if [ -f ${HOME}/wan_ip.txt ]; then
-	OLD_WAN_IP=$(cat ${HOME}/wan_ip.txt)
-else
-	log "No file, need IP"
-	OLD_WAN_IP=""
-fi
+	WAN_IP=$(curl -s ${WAN_IP_PROVIDER})
+	if [ $? -eq 0 ]; then
+		if [ -f ${HOME}/wan_ip.txt ]; then
+			OLD_WAN_IP=$(cat ${HOME}/wan_ip.txt)
+		else
+			OLD_WAN_IP=""
+		fi
 
-if [ "${WAN_IP}" = "${OLD_WAN_IP}" ]; then
-	log "IP Unchanged"
-else
-	echo ${WAN_IP} > ${HOME}/wan_ip.txt
-	log "IP Changed! Updating Linode DNS to ${WAN_IP}. Results from Linode are displayed below."
-	resource_update | jq -M
-	echo
-fi
+		if [ "${WAN_IP}" = "${OLD_WAN_IP}" ]; then
+			log "IP Unchanged"
+		else
+			echo ${WAN_IP} > ${HOME}/wan_ip.txt
+			log "IP Changed! Updating Linode DNS to ${WAN_IP}. Results from Linode are displayed below."
+			resource_update | jq -M
+			echo
+		fi
+	else
+		log "Request to ${WAN_IP_PROVIDER} failed! Is the internet connection down?"
+	fi
 }
 
 function match_linode_records {
@@ -86,7 +84,7 @@ LINODE_IP=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.lin
 echo $WAN_IP > ${HOME}/wan_ip.txt
 
 if [ "${WAN_IP}" = "${LINODE_IP}" ]; then
-	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${A_RECORD}. Will check again every 10 minutes..."
+	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${A_RECORD}. Will check again every ${CHECK_FREQUENCY_SECS} seconds..."
 else
 	log "Current WAN IP (${WAN_IP}) differs from the Linode DNS record (${LINODE_IP}) for ${A_RECORD}. Results from Linode are displayed below:" 
 	resource_update | jq -M

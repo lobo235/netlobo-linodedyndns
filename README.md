@@ -3,15 +3,16 @@ Linode Dynamic DNS Updater docker container. Using a provided Linode API token, 
 
 ## Prerequisites
 * A Linode Account with a Domain name hosted in that account
-* An existing A Record entry
+* An existing `A Record` entry for the Domain
 
 ## Required Environment Variables:
-* LINODE_API_KEY - Generate this in your Linode account
-* DOMAIN_NAME - the name of the domain managed in your Linode account
-* A_RECORD - the name of the A Record to update with your WAN IP
+* `LINODE_API_KEY` - Generate this in your Linode account
+* `DOMAIN_NAME` - the name of the domain managed in your Linode account
+* `A_RECORD` - the name of the A Record to update with your WAN IP
 
 ## Optional Environment Variables:
-* CHECK_FREQUENCY_SECS - Number of seconds to wait between WAN IP checks. Defaults to 600 (10 minutes)
+* `WAN_IP_PROVIDER` - Must only return the IP address, no html or extra stuff! (Defaults to ipv4.icanhazip.com)
+* `CHECK_FREQUENCY_SECS` - Number of seconds to wait between WAN IP checks. Defaults to 600 (10 minutes)
 
 ## Setup
 
