@@ -14,8 +14,8 @@
 # A_RECORD=
 
 # Optional Environment variables
-WAN_IP_PROVIDER="${WAN_IP_PROVIDER:-"ipv4.icanhazip.com"}" # (Must only return the IP address, no html or extra stuff!)
-CHECK_FREQUENCY_SECS="${CHECK_FREQUENCY_SECS:-"600"}" # (Defaults to 10 minutes)
+[ -z "${WAN_IP_PROVIDER}" ] && WAN_IP_PROVIDER="ipv4.icanhazip.com" || WAN_IP_PROVIDER=${WAN_IP_PROVIDER}
+[ -z "${CHECK_FREQUENCY_SECS}" ] && CHECK_FREQUENCY_SECS="600" || CHECK_FREQUENCY_SECS=${CHECK_FREQUENCY_SECS}
 
 function resource_update {
 	curl -s -H "Content-Type: application/json" \
