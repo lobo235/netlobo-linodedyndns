@@ -13,7 +13,7 @@
 # DOMAIN_NAME=
 # A_RECORD=
 
-[ -z "${LINODE_API_KEY}" ] && echo "No LINODE_API_KEY was provided, exiting!" && exit 1 || echo "LINODE_API_KEY was provided"
+[ -z "${LINODE_API_KEY}" ] && echo "No LINODE_API_KEY was provided, exiting!" && exit 1 || echo "LINODE_API_KEY was provided (${LINODE_API_KEY})"
 echo "Configured DOMAIN_NAME is ${DOMAIN_NAME}"
 echo "Configured A_RECORD is ${A_RECORD}"
 
