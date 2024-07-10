@@ -9,9 +9,9 @@
 # Create an existing 'A Record' entry for the Domain
 
 # Environment variables needed by the container
-# LINODE_API_KEY=
-# DOMAIN_NAME=
-# A_RECORD=
+# LINODE_API_KEY=          # Linode API key
+# DOMAIN_NAME=             # Domain name
+# A_RECORD=                # A record name
 
 [ -z "${LINODE_API_KEY}" ] && echo "No LINODE_API_KEY was provided, exiting!" && exit 1 || echo "LINODE_API_KEY was provided (starts with ${LINODE_API_KEY:0:5}...)"
 echo "Configured DOMAIN_NAME is ${DOMAIN_NAME}"
@@ -23,7 +23,8 @@ echo "Configured WAN_IP_PROVIDER is ${WAN_IP_PROVIDER}"
 [ -z "${CHECK_FREQUENCY_SECS}" ] && CHECK_FREQUENCY_SECS="600" || CHECK_FREQUENCY_SECS=${CHECK_FREQUENCY_SECS}
 echo "Configured CHECK_FREQUENCY_SECS is ${CHECK_FREQUENCY_SECS}"
 
-resource_update() {
+# Function to update the Linode DNS record
+update_dns_record() {
 	curl -s -H "Content-Type: application/json" \
 		-H "Authorization: Bearer ${LINODE_API_KEY}" \
 		-X PUT -d '{
@@ -41,11 +42,13 @@ resource_update() {
 		https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID}
 }
 
+# Function to log messages with timestamp
 log() {
 	echo "[$(date "+%Y-%m-%d %H:%M:%S")] $1"
 }
 
-check_wan() {
+# Function to check the WAN IP and update the Linode DNS record if it has changed
+check_wan_ip() {
 	WAN_IP=$(curl -s ${WAN_IP_PROVIDER})
 	if [ $? -eq 0 ]; then
 		if [ -f ${HOME}/wan_ip.txt ]; then
@@ -59,7 +62,7 @@ check_wan() {
 		else
 			echo ${WAN_IP} > ${HOME}/wan_ip.txt
 			log "IP Changed! Updating Linode DNS to ${WAN_IP}. Results from Linode are displayed below."
-			resource_update | jq -M
+			update_dns_record | jq -M
 			echo
 		fi
 	else
@@ -67,6 +70,7 @@ check_wan() {
 	fi
 }
 
+# Function to match the Linode records with the provided domain and A record
 match_linode_records() {
 	DOMAIN_ID=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.linode.com/v4/domains/ | jq -r ".data[] | select(.domain==\"${DOMAIN_NAME}\") | .id")
 	if [ ${DOMAIN_ID} -gt 0 ]; then
@@ -84,21 +88,26 @@ match_linode_records() {
 	fi
 }
 
+# Match the Linode records with the provided domain and A record
 match_linode_records
+
+# Get the current WAN IP and Linode DNS record IP
 WAN_IP=$(curl -s ${WAN_IP_PROVIDER})
 LINODE_IP=$(curl -s -H "Authorization: Bearer ${LINODE_API_KEY}" https://api.linode.com/v4/domains/${DOMAIN_ID}/records/${RESOURCE_ID} | jq -r ".target")
 echo $WAN_IP > ${HOME}/wan_ip.txt
 
+# Compare the WAN IP with the Linode DNS record IP
 if [ "${WAN_IP}" = "${LINODE_IP}" ]; then
 	log "Current WAN IP (${WAN_IP}) matches Linode DNS record for ${A_RECORD}. Will check again every ${CHECK_FREQUENCY_SECS} seconds..."
 else
 	log "Current WAN IP (${WAN_IP}) differs from the Linode DNS record (${LINODE_IP}) for ${A_RECORD}. Results from Linode are displayed below:" 
-	resource_update | jq -M
+	update_dns_record | jq -M
 	echo
 fi
 
+# Continuously check the WAN IP and update the Linode DNS record if it has changed
 while true
 do
 	sleep ${CHECK_FREQUENCY_SECS}
-	check_wan
+	check_wan_ip
 done
