@@ -16,6 +16,9 @@ Linode Dynamic DNS Updater docker container. Using a provided Linode API token, 
 
 ## Setup
 
-You first must find out the Domain ID and resource ID numbers. In order to do this follow the steps below.
-1. Create a Linode API Key through your account profile at https://cloud.linode.com/dashboard. Give it rights to read/write to domains only.
+To set up the Linode Dynamic DNS Updater, follow these steps:
+
+1. Create a Linode API Key through your account profile at [https://cloud.linode.com/dashboard](https://cloud.linode.com/dashboard). Give it rights to read/write to domains only.
 2. Run the docker container using your orchestrator of choice (I prefer HashiCorp's Nomad)
+
+By following these steps, you will be able to keep your Linode DNS `A Record` up-to-date with your WAN IP, ensuring seamless connectivity to your domain.
