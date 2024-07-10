@@ -29,5 +29,5 @@ jobs:
       with:
         context: .
         push: true
-        tags: netlobo-linodedyndns:latest
+        tags: bpexp235/netlobo-linodedyndns:latest
         labels: ${{ steps.meta.outputs.labels }}
